@@ -257,7 +257,7 @@ def main():
         cpu_used = get_cpu_use()
         cpu_freq = get_cpu_freq()
         cpu_temp = get_cpu_temp()
-        cpu_used_bar = get_bar(cpu_used,num=66)
+        cpu_used_bar = get_bar(cpu_used,num=65)
         task_infos = get_task_info()
 
         #memory
@@ -285,8 +285,8 @@ def main():
         #cpu memory
         print(('\033[1;37mCpu-T: {0:.1f}C | Freq: {1:.1f}MHz | Mem: {2:d}MB/{3:d}MB | Swap: {4:d}MB/{5:d}MB\033[0m').format(
             cpu_temp,cpu_freq,mem_used,mem_total,swap_used,swap_total))
-        print('Cpu:'+cpu_used_bar)
-        print('Mem:'+mem_used_bar+'  Swap:'+swap_used_bar)
+        print('Cpu: '+cpu_used_bar)
+        print('Mem: '+mem_used_bar+' Swap:'+swap_used_bar)
         
         # Task
         print(task_infos)
