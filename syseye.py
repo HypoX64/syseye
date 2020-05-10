@@ -201,10 +201,7 @@ def get_disk_use():
         for allow in allows:
             if allow in line[38:] or len(line)==(line[25:].find('/')+25+1):   
                 info = line.split()
-                if float(info[4].replace('%',''))<90:
-                    info[4] = change_color(info[4], 'green')
-                else:
-                    info[4] = change_color(info[4], 'red')
+                info[4] = auto_color(info[4], int(info[4].replace('%','')))
                 disk_infos.append(info)
                 break
     return disk_infos
@@ -213,20 +210,15 @@ def get_disk_use():
 -----------------------------other tools-----------------------------
 '''
 def get_bar(percent,num = 25):
-    # graphs = ' ▏▎▍▋▊▉'
-    # percent = round(percent)
     bar = '['
     for i in range(num):
-        if i < round(percent/int((100/num))):
+        if i < round(percent/(100/num)):
             bar += '#'
         else:
             bar += '-'
     bar += ']'
     bar = '{0:>5.1f}% '.format(percent)+bar
-    if percent<95:
-        bar = change_color(bar, 'green')
-    else:
-        bar = change_color(bar, 'red')
+    bar = auto_color(bar, percent)
     return bar
 
 def fill_str(string,num):
@@ -236,11 +228,22 @@ def fill_str(string,num):
         string +=' '
     return string
 
+def auto_color(string,percent):
+    if 0<=percent<=70:
+        string = change_color(string, 'green')
+    elif 70<percent<=90:
+        string = change_color(string, 'yellow')
+    else:
+        string = change_color(string, 'red')
+    return string
+
 def change_color(string,color):
     if color =='red':
         string = '\033[1;31m'+string+'\033[0m'
     elif color == 'green':
         string = '\033[1;32m'+string+'\033[0m'
+    elif color == 'yellow':
+        string = '\033[1;33m'+string+'\033[0m'
     if color =='white':
         string = '\033[1;37m'+string+'\033[0m'
     return string
