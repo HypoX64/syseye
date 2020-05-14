@@ -132,7 +132,7 @@ def get_gpu_use():
     print_flag = False
     for line in infos_str:
         line_split = line.split()
-        if float(line_split[4].replace('MiB',''))>500:
+        if 'No running' not in line and float(line_split[4].replace('MiB',''))>500:
             task_infos = task_infos+line[2:]+'\n'
             print_flag = True
     if not print_flag:
@@ -149,9 +149,11 @@ def get_task_info():
     out_string = stream.buffer.read().decode('utf-8',"ignore")
     out_string = out_string.split('\n')
 
-    infos = '\033[1;37m  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND     \033[0m\n'
-    for i in range(3):
-        infos += (out_string[7+i]+'\n')
+    infos = ''
+    if len(out_string) > 10:
+        infos = '\033[1;37m  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND     \033[0m\n'
+        for i in range(3):
+            infos += (out_string[7+i]+'\n')
 
     return infos
 
