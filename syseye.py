@@ -130,9 +130,10 @@ def get_gpu_use():
     infos_str = infos_str.replace('|','')
     infos_str = infos_str.split('\n')
     print_flag = False
+    print(infos_str)
     for line in infos_str:
         line_split = line.split()
-        if 'No running' not in line and float(line_split[4].replace('MiB',''))>500:
+        if 'No running' not in line and'+-------' not in line and float(line_split[4].replace('MiB',''))>500:
             task_infos = task_infos+line[2:]+'\n'
             print_flag = True
     if not print_flag:
