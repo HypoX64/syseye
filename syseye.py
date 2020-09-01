@@ -162,7 +162,7 @@ def get_task_info():
 -----------------------------Network-----------------------------
 '''
 net_infos_history = [0,0]
-def get_net_use(network_adapter = 'all'):
+def get_net_use(t_cost,network_adapter = 'all'):
     net_str = os.popen('cat /proc/net/dev').read()
     infos = []
     net_infos = [0,0,0,0]
@@ -184,8 +184,8 @@ def get_net_use(network_adapter = 'all'):
         net_infos[2] = 0
         net_infos[3] = 0
     else:
-        net_infos[2] = net_infos[0]-net_infos_history[0]
-        net_infos[3] = net_infos[1]-net_infos_history[1]
+        net_infos[2] = (net_infos[0]-net_infos_history[0])/t_cost
+        net_infos[3] = (net_infos[1]-net_infos_history[1])/t_cost
     net_infos_history[0] = net_infos[0]
     net_infos_history[1] = net_infos[1]
     return net_infos
@@ -253,8 +253,12 @@ def change_color(string,color):
 '''
 -----------------------------main-----------------------------
 '''
+
 def main():
+    t_cost = 1.0
+    sleep_time = 1.0
     while(1):
+        t_start = time.time()
         #cpu
         cpu_used = get_cpu_use()
         cpu_freq = get_cpu_freq()
@@ -277,7 +281,7 @@ def main():
             gpu_mem_bars.append(get_bar(100*gpu_infoss[i][4]/gpu_infoss[i][5]))
 
         #net
-        net_infos = get_net_use()
+        net_infos = get_net_use(t_cost)
 
         #disk
         disk_infos = get_disk_use()
@@ -312,7 +316,10 @@ def main():
             print(fill_str(disk_info[0], 20),fill_str(disk_info[5], 20),
                 fill_str(disk_info[2]+'/'+disk_info[1], 20),fill_str(disk_info[4], 15))
 
-        time.sleep(1)
-
+        time.sleep(sleep_time)
+        t_end = time.time()
+        t_cost = t_end-t_start
+        if t_cost > 1.0:
+            sleep_time = 0.1
 if __name__ == '__main__':
     main()
