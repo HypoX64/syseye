@@ -132,7 +132,7 @@ def get_gpu_use():
     print_flag = False
     for line in infos_str:
         line_split = line.split()
-        if 'No running' not in line and'+-------' not in line and float(line_split[4].replace('MiB',''))>500:
+        if 'No running' not in line and'+-------' not in line and float(line_split[-1].replace('MiB',''))>500:
             task_infos = task_infos+line[2:]+'\n'
             print_flag = True
     if not print_flag:
@@ -319,7 +319,7 @@ def main():
         time.sleep(sleep_time)
         t_end = time.time()
         t_cost = t_end-t_start
-        if t_cost > 1.0:
+        if t_cost > 2.0:
             sleep_time = 0.1
 if __name__ == '__main__':
     main()
