@@ -198,7 +198,7 @@ def get_disk_use():
     disk_str = disk_str.split('\n')
     disk_infos = []
     # print(disk_str)
-    allows = ['/home','/media']  # and '/'
+    allows = ['/home','/media','/sd']  # and '/'
     for line in disk_str:
         for allow in allows:
             if allow in line[38:] or len(line)==(line[25:].find('/')+25+1):   
