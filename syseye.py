@@ -120,10 +120,11 @@ def get_gpu_use():
         if 'NVIDIA-SMI' in line:
            cuda_infos = '\033[1;37m'+line.replace('|','')[1:]+'\033[0m'
     
-    # task_infos
-    task_infos = '\033[1;37mGPU       PID   Type   Process name                        GPU Memory Usage\033[0m\n'
+    # task_infos    
     infos_str = out_string
     infos_str = infos_str[infos_str.find('Processes'):]
+    infos_str = infos_str[infos_str.find('\n')+1:]
+    task_infos = '\033[1;37m'+infos_str[:infos_str.find('\n')+1].replace('|', '')+'\033[0m'
     infos_str = infos_str[infos_str.find('======'):]
     infos_str = infos_str[infos_str.find('\n')+1:]
     infos_str = infos_str[:infos_str.find('+-------------------')-1]
@@ -133,7 +134,7 @@ def get_gpu_use():
     for line in infos_str:
         line_split = line.split()
         if 'No running' not in line and'+-------' not in line and float(line_split[-1].replace('MiB',''))>500:
-            task_infos = task_infos+line[2:]+'\n'
+            task_infos = task_infos+line+'\n'
             print_flag = True
     if not print_flag:
         task_infos=''
@@ -156,7 +157,6 @@ def get_task_info():
             infos += (out_string[7+i]+'\n')
 
     return infos
-
 
 '''
 -----------------------------Network-----------------------------
@@ -256,9 +256,10 @@ def change_color(string,color):
 
 def main():
     t_cost = 1.0
-    sleep_time = 1.0
-    while(1):
-        t_start = time.time()
+    sleep_time = 0.8
+    smooth = 10
+    smooth_gpu_infosss = []
+    while(1):  
         #cpu
         cpu_used = get_cpu_use()
         cpu_freq = get_cpu_freq()
@@ -275,9 +276,24 @@ def main():
         #gpu
         util_used_bars=[];gpu_mem_bars=[]
         gpu_infoss,cuda_infos,gpu_task_infos = get_gpu_use()
+
+        if len(smooth_gpu_infosss) < smooth:
+            smooth_gpu_infosss.append(gpu_infoss)
+        else:
+            smooth_gpu_infosss[:smooth-1] = smooth_gpu_infosss[1:smooth]
+            smooth_gpu_infosss[smooth-1] = gpu_infoss
+        smooth_gpu_utils = [];smooth_gpu_powers = []
+        for i in range(len(gpus)):
+            utils = []; powers = []
+            for j in range(len(smooth_gpu_infosss)):
+                utils.append(smooth_gpu_infosss[j][i][6])
+                powers.append(smooth_gpu_infosss[j][i][2])
+            smooth_gpu_utils.append(sum(utils)/len(utils))
+            smooth_gpu_powers.append(int(sum(powers)/len(powers)))
+
         for i in range(len(gpus)):
             gpu_infos = gpu_infoss[i]
-            util_used_bars.append(get_bar(gpu_infoss[i][6]))
+            util_used_bars.append(get_bar(smooth_gpu_utils[i]))
             gpu_mem_bars.append(get_bar(100*gpu_infoss[i][4]/gpu_infoss[i][5]))
 
         #net
@@ -287,39 +303,38 @@ def main():
         disk_infos = get_disk_use()
 
         #-----------------------------print-----------------------------
-        os.system('clear')
+        print_str = ''
         #cpu memory
-        print(('\033[1;37mCpu-T: {0:.1f}C | Freq: {1:.1f}MHz | Mem: {2:d}MB/{3:d}MB | Swap: {4:d}MB/{5:d}MB\033[0m').format(
-            cpu_temp,cpu_freq,mem_used,mem_total,swap_used,swap_total))
-        print('Cpu: '+cpu_used_bar)
-        print('Mem: '+mem_used_bar+' Swap:'+swap_used_bar)
+        print_str += ('\033[1;37mCpu-T: {0:.1f}C | Freq: {1:.1f}MHz | Mem: {2:d}MB/{3:d}MB | Swap: {4:d}MB/{5:d}MB\033[0m\n').format(
+            cpu_temp,cpu_freq,mem_used,mem_total,swap_used,swap_total)
+        print_str += ('Cpu: '+cpu_used_bar+'\n')
+        print_str += ('Mem: '+mem_used_bar+' Swap:'+swap_used_bar+'\n')
         
         # Task
-        print(task_infos)
+        print_str += (task_infos+'\n')
         
         #gpu
-        print(cuda_infos)
+        print_str += (cuda_infos+'\n')
         for i in range(len(gpus)):
-            print(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
-                i,gpu_infoss[i][1],gpu_infoss[i][2],gpu_infoss[i][3],
-                gpu_infoss[i][4],gpu_infoss[i][5],gpu_infoss[i][0]))
-            print('Util:'+util_used_bars[i]+'  Mem:'+gpu_mem_bars[i])
-        print(gpu_task_infos)
+            print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
+                i,gpu_infoss[i][1],smooth_gpu_powers[i],gpu_infoss[i][3],
+                gpu_infoss[i][4],gpu_infoss[i][5],gpu_infoss[i][0])+'\n')
+            print_str += ('Util:'+util_used_bars[i]+'  Mem:'+gpu_mem_bars[i]+'\n')
+        print_str += (gpu_task_infos+'\n')
         
         #net
-        print(('\033[1;37mNetwork    ↑ all:{0:.1f}GB ↓ all:{1:.1f}GB     ↑ :{2:.1f}Kb/s ↓ :{3:.1f}Kb/s\033[0m').format(
-            net_infos[1]/1024/1024,net_infos[0]/1024/1024,net_infos[3],net_infos[2]))
+        print_str += (('\033[1;37mNetwork    ↑ all:{0:.1f}GB ↓ all:{1:.1f}GB     ↑ :{2:.1f}Kb/s ↓ :{3:.1f}Kb/s\033[0m').format(
+            net_infos[1]/1024/1024,net_infos[0]/1024/1024,net_infos[3],net_infos[2])+'\n')
 
         #disk
-        print('\n\033[1;37mFilesystem           Mounted on           Used/Total           Used%\033[0m')
+        print_str += ('\n\033[1;37mFilesystem             Mounted on             Used/Total             Used%\033[0m'+'\n')
         for disk_info in disk_infos:
-            print(fill_str(disk_info[0], 20),fill_str(disk_info[5], 20),
-                fill_str(disk_info[2]+'/'+disk_info[1], 20),fill_str(disk_info[4], 15))
+            print_str += (fill_str(disk_info[0], 23)+fill_str(disk_info[5], 23)+ \
+                fill_str(disk_info[2]+'/'+disk_info[1], 23)+fill_str(disk_info[4], 15)+'\n')
 
+        print("\033c", end="")
+        print(print_str,end="")
         time.sleep(sleep_time)
-        t_end = time.time()
-        t_cost = t_end-t_start
-        if t_cost > 2.0:
-            sleep_time = 0.1
+
 if __name__ == '__main__':
     main()

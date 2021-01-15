@@ -4,7 +4,6 @@ A lightweight deep learning server monitor.
 ```bash
 cd ~
 git clone https://github.com/HypoX64/syseye
-cd syseye
-python syseye.py
+python ~/syseye/syseye.py
 ```
 ![image](./example.png)
