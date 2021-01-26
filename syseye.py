@@ -93,9 +93,10 @@ def get_gpu_use():
     # gpu infos
     for i in range(len(gpus)):
         infos_str = out_string
-        infos_str = infos_str[infos_str.find(str(i)+'  '+gpus[i]):]
+        infos_str = infos_str[infos_str.find(str(i)+'  '+gpus[i][:10]):]
         infos_str = infos_str[infos_str.find('\n')+1:]
         infos_str = infos_str[:infos_str.find('\n')+1]
+        print(infos_str)
         infos_str = infos_str.split()
         #['|', '50%', '42C', 'P0', '19W', '/', '75W', '|', '929MiB', '/', '5050MiB', '|', '14%', 'Default', '|']
         if infos_str[1].replace('%','') == 'N/A':
@@ -256,7 +257,7 @@ def change_color(string,color):
 
 def main():
     t_cost = 1.0
-    sleep_time = 0.8
+    sleep_time = 0.5
     smooth = 10
     smooth_gpu_infosss = []
     while(1):  
@@ -316,7 +317,7 @@ def main():
         #gpu
         print_str += (cuda_infos+'\n')
         for i in range(len(gpus)):
-            print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
+            print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','').replace(' RTX','').replace(' ','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
                 i,gpu_infoss[i][1],smooth_gpu_powers[i],gpu_infoss[i][3],
                 gpu_infoss[i][4],gpu_infoss[i][5],gpu_infoss[i][0])+'\n')
             print_str += ('Util:'+util_used_bars[i]+'  Mem:'+gpu_mem_bars[i]+'\n')
