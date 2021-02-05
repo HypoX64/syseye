@@ -96,7 +96,6 @@ def get_gpu_use():
         infos_str = infos_str[infos_str.find(str(i)+'  '+gpus[i][:10]):]
         infos_str = infos_str[infos_str.find('\n')+1:]
         infos_str = infos_str[:infos_str.find('\n')+1]
-        print(infos_str)
         infos_str = infos_str.split()
         #['|', '50%', '42C', 'P0', '19W', '/', '75W', '|', '929MiB', '/', '5050MiB', '|', '14%', 'Default', '|']
         if infos_str[1].replace('%','') == 'N/A':
@@ -201,12 +200,13 @@ def get_disk_use():
     # print(disk_str)
     allows = ['/home','/media','/sd']  # and '/'
     for line in disk_str:
-        for allow in allows:
-            if allow in line[38:] or len(line)==(line[25:].find('/')+25+1):   
-                info = line.split()
-                info[4] = auto_color(info[4], int(info[4].replace('%','')))
-                disk_infos.append(info)
-                break
+        info = line.split()
+        if info != []:
+            for allow in allows:
+                if allow in line[38:] or info[5]=='/'  or 'T' in info[1]:       
+                    info[4] = auto_color(info[4], int(info[4].replace('%','')))
+                    disk_infos.append(info)
+                    break
     return disk_infos
 
 '''
@@ -256,11 +256,13 @@ def change_color(string,color):
 '''
 
 def main():
-    t_cost = 1.0
+    t_cost = 0.5
     sleep_time = 0.5
     smooth = 10
     smooth_gpu_infosss = []
+
     while(1):  
+        t_start = time.time()
         #cpu
         cpu_used = get_cpu_use()
         cpu_freq = get_cpu_freq()
@@ -336,6 +338,8 @@ def main():
         print("\033c", end="")
         print(print_str,end="")
         time.sleep(sleep_time)
+        t_end = time.time()
+        t_cost = t_end-t_start
 
 if __name__ == '__main__':
     main()
