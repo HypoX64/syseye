@@ -107,11 +107,14 @@ def get_gpu_use():
             power_used = -1
             power_max = -1
         else:
-            power_used = int(infos_str[4].replace('W','')) # W
-            power_max = int(infos_str[6].replace('W',''))  # W
+            
+            power_used = int(infos_str[4].replace('W','')) if infos_str[4] !='N/A' else 0 # W
+            power_max = int(infos_str[6].replace('W','')) if infos_str[6] !='N/A' else -1 # W
+            # power_max = int(infos_str[6].replace('W',''))  
         mem_used = int(infos_str[8].replace('MiB','')) # MB
         mem_max = int(infos_str[10].replace('MiB',''))  # MB
-        util_used = int(infos_str[12].replace('%',''))  # %
+
+        util_used = int(infos_str[12].replace('%','')) if infos_str[12] !='N/A' else 0  # %
         gpu_infos.append([fan,temp,power_used,power_max,mem_used,mem_max,util_used])
     # cuda infos
     infos_str = out_string
@@ -319,7 +322,7 @@ def main():
         #gpu
         print_str += (cuda_infos+'\n')
         for i in range(len(gpus)):
-            print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','').replace(' RTX','').replace(' ','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
+            print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','').replace(' RTX','').replace(' ','').replace('GPU','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
                 i,gpu_infoss[i][1],smooth_gpu_powers[i],gpu_infoss[i][3],
                 gpu_infoss[i][4],gpu_infoss[i][5],gpu_infoss[i][0])+'\n')
             print_str += ('Util:'+util_used_bars[i]+'  Mem:'+gpu_mem_bars[i]+'\n')
