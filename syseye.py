@@ -73,14 +73,20 @@ def get_swap_use():
     mem_str = mem_str.split()
     total = int(float(mem_str[0])/1024)
     used = int(float(mem_str[1])/1024)
-    percent = int(used/total*100)
+    if mem_str[0] == '0':
+        percent = 0
+    else:
+        percent = int(used/total*100)
+
     return total,used,percent
 
 '''
 -----------------------------Gpu-----------------------------
 '''
 gpus_str = os.popen('nvidia-smi -L').read()
-gpus =[]
+if gpus_str == "":
+    print('No gpu!')
+gpus =[gpus_str]
 if 'communicate with the NVIDIA driver' not in gpus_str:
     while gpus_str.find('\n') != -1:
         gpus.append(gpus_str[gpus_str.find(':')+2:gpus_str.find('(')-1])
@@ -102,7 +108,10 @@ def get_gpu_use():
             fan = -1
         else:
             fan = int(infos_str[1].replace('%',''))        # %
-        temp = int(infos_str[2].replace('C',''))       # C
+        if infos_str[2].replace('C','') == 'N/A':
+            temp = -1
+        else:
+            temp = int(infos_str[2].replace('C',''))       # C
         if infos_str[4] == 'N/A':
             power_used = -1
             power_max = -1
@@ -280,27 +289,28 @@ def main():
         swap_used_bar = get_bar(swap_percent)
 
         #gpu
-        util_used_bars=[];gpu_mem_bars=[]
-        gpu_infoss,cuda_infos,gpu_task_infos = get_gpu_use()
+        if gpus_str != "":
+            util_used_bars=[];gpu_mem_bars=[]
+            gpu_infoss,cuda_infos,gpu_task_infos = get_gpu_use()
 
-        if len(smooth_gpu_infosss) < smooth:
-            smooth_gpu_infosss.append(gpu_infoss)
-        else:
-            smooth_gpu_infosss[:smooth-1] = smooth_gpu_infosss[1:smooth]
-            smooth_gpu_infosss[smooth-1] = gpu_infoss
-        smooth_gpu_utils = [];smooth_gpu_powers = []
-        for i in range(len(gpus)):
-            utils = []; powers = []
-            for j in range(len(smooth_gpu_infosss)):
-                utils.append(smooth_gpu_infosss[j][i][6])
-                powers.append(smooth_gpu_infosss[j][i][2])
-            smooth_gpu_utils.append(sum(utils)/len(utils))
-            smooth_gpu_powers.append(int(sum(powers)/len(powers)))
+            if len(smooth_gpu_infosss) < smooth:
+                smooth_gpu_infosss.append(gpu_infoss)
+            else:
+                smooth_gpu_infosss[:smooth-1] = smooth_gpu_infosss[1:smooth]
+                smooth_gpu_infosss[smooth-1] = gpu_infoss
+            smooth_gpu_utils = [];smooth_gpu_powers = []
+            for i in range(len(gpus)):
+                utils = []; powers = []
+                for j in range(len(smooth_gpu_infosss)):
+                    utils.append(smooth_gpu_infosss[j][i][6])
+                    powers.append(smooth_gpu_infosss[j][i][2])
+                smooth_gpu_utils.append(sum(utils)/len(utils))
+                smooth_gpu_powers.append(int(sum(powers)/len(powers)))
 
-        for i in range(len(gpus)):
-            gpu_infos = gpu_infoss[i]
-            util_used_bars.append(get_bar(smooth_gpu_utils[i]))
-            gpu_mem_bars.append(get_bar(100*gpu_infoss[i][4]/gpu_infoss[i][5]))
+            for i in range(len(gpus)):
+                gpu_infos = gpu_infoss[i]
+                util_used_bars.append(get_bar(smooth_gpu_utils[i]))
+                gpu_mem_bars.append(get_bar(100*gpu_infoss[i][4]/gpu_infoss[i][5]))
 
         #net
         net_infos = get_net_use(t_cost)
@@ -320,13 +330,14 @@ def main():
         print_str += (task_infos+'\n')
         
         #gpu
-        print_str += (cuda_infos+'\n')
-        for i in range(len(gpus)):
-            print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','').replace(' RTX','').replace(' ','').replace('GPU','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
-                i,gpu_infoss[i][1],smooth_gpu_powers[i],gpu_infoss[i][3],
-                gpu_infoss[i][4],gpu_infoss[i][5],gpu_infoss[i][0])+'\n')
-            print_str += ('Util:'+util_used_bars[i]+'  Mem:'+gpu_mem_bars[i]+'\n')
-        print_str += (gpu_task_infos+'\n')
+        if gpus_str != "":
+            print_str += (cuda_infos+'\n')
+            for i in range(len(gpus)):
+                print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','').replace(' RTX','').replace(' ','').replace('GPU','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
+                    i,gpu_infoss[i][1],smooth_gpu_powers[i],gpu_infoss[i][3],
+                    gpu_infoss[i][4],gpu_infoss[i][5],gpu_infoss[i][0])+'\n')
+                print_str += ('Util:'+util_used_bars[i]+'  Mem:'+gpu_mem_bars[i]+'\n')
+            print_str += (gpu_task_infos+'\n')
         
         #net
         print_str += (('\033[1;37mNetwork    ↑ all:{0:.1f}GB ↓ all:{1:.1f}GB     ↑ :{2:.1f}Kb/s ↓ :{3:.1f}Kb/s\033[0m').format(
