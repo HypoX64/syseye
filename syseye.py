@@ -84,10 +84,13 @@ def get_swap_use():
 -----------------------------Gpu-----------------------------
 '''
 gpus_str = os.popen('nvidia-smi -L').read()
+HAS_GPU = True
 if gpus_str == "":
+    HAS_GPU = False
     print('No gpu!')
-gpus =[gpus_str]
-if 'communicate with the NVIDIA driver' not in gpus_str:
+    time.sleep(3) 
+gpus =[]
+if ('communicate with the NVIDIA driver' not in gpus_str) and HAS_GPU:
     while gpus_str.find('\n') != -1:
         gpus.append(gpus_str[gpus_str.find(':')+2:gpus_str.find('(')-1])
         gpus_str=gpus_str[gpus_str.find('\n')+1:]
@@ -289,7 +292,7 @@ def main():
         swap_used_bar = get_bar(swap_percent)
 
         #gpu
-        if gpus_str != "":
+        if HAS_GPU:
             util_used_bars=[];gpu_mem_bars=[]
             gpu_infoss,cuda_infos,gpu_task_infos = get_gpu_use()
 
@@ -330,7 +333,7 @@ def main():
         print_str += (task_infos+'\n')
         
         #gpu
-        if gpus_str != "":
+        if HAS_GPU:
             print_str += (cuda_infos+'\n')
             for i in range(len(gpus)):
                 print_str +=(('\033[1;37mGpu'+'{0:d}'+': '+gpus[i].replace('GeForce','').replace(' RTX','').replace(' ','').replace('GPU','')+'  Temp: {1:.1f}C | Power: {2:>3d}w/{3:d}w | Mem: {4:>5d}MB/{5:d}MB | Fan: {6:d}%\033[0m').format(
